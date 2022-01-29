@@ -9,6 +9,9 @@ const config = require("./config.json");
 //   response.send("Hello from Firebase!");
 // });
 
+const {WebhookClient, Payload} = require("dialogflow-fulfillment");
+
+
 const region = "asia-east2";
 const runtimeOptions = {
     timeoutSeconds:4,
@@ -20,12 +23,30 @@ exports.webhook = functions
     .runWith(runtimeOptions)
     .https.onRequest(async (req, res) => {
         console.log("LINE REQUEST BODY", JSON.stringify(req.body));
-        const replyToken = req.body.events[0].replyToken;
-        const messages = [{
-            "type":"text",
-            "text":req.body.events[0].message.text
-        }];
-        return lineReply(replyToken, messages);
+
+        const agent = new WebhookClient({request:req , response:res});
+
+        
+        const loginView = async agent=>{
+
+            const flexMenuMsg = {};
+
+            const payloadMsg = new Payload("LINE",flexMenuMsg,{sendAsMessage:true});
+            // agent.add("this is from fulfillment");
+            return agent.add(payloadMsg);
+        };
+        
+        let intentMap = new Map();
+        intentMap.set("login-view",loginView);
+        agent.handleRequest(intentMap);
+
+
+        // const replyToken = req.body.events[0].replyToken;
+        // const messages = [{
+        //     "type":"text",
+        //     "text":req.body.events[0].message.text
+        // }];
+        // return lineReply(replyToken, messages);
     });
 
 const lineReply = (replyToken, messages) => {
